@@ -1,8 +1,17 @@
 import unittest
+from src.repository import MemoryStorageLead
+from src.business import PowerDialer
 
-class PowerDialer(unittest.TestCase):
+class TestPowerDialer(unittest.TestCase):
     def test_on_agent_login(self):
-        self.assertTrue(True)
+        repo = MemoryStorageLead()
+        power_dialer = PowerDialer("1", repo)
+
+        self.assertEqual(len(repo.storage),  0)
+
+        power_dialer.on_agent_login()
+
+        self.assertEqual(len(repo.storage),  2)
 
     def test_on_agent_logout(self):
         self.assertTrue(True)
@@ -15,7 +24,4 @@ class PowerDialer(unittest.TestCase):
 
     def test_on_call_ended(self):
         self.assertTrue(True)
-
-if __name__ == '__main__':
-    unittest.main()
 
