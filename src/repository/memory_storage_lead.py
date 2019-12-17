@@ -2,6 +2,15 @@ class MemoryStorageLead:
     def __init__(self):
         self.storage = {}
 
+    def grant_lock(self, agent_id: str, phone_number: str):
+        """
+        We can use redis or another implementation to guarantee distributed locking property
+        """
+        return True
+
+    def release_lock(self, lock_id: str):
+        pass
+
     def update_lead_in_progress(self, agent_id: str, phone_number: str):
         self.storage[phone_number] = (agent_id, "in_progress")
         return self.storage[phone_number]
