@@ -12,17 +12,20 @@ class PowerDialer:
             phone_number = get_lead_phone_number_to_dial()
 
             if(phone_number != None and dial(self.agent_id, phone_number) == True):
-                self.repository.update_lead_pending(self.agent_id, phone_number)
+                self.repository.update_lead_pending(phone_number)
 
     def on_agent_logout(self):
-        self.repository.end_agent_lead_calls(self.agent_id)
+        agent_leads = self.repository.find_agent_in_progress_leads(self.agent_id)
+
+        # This should actually publish an event so that we can end calls
+        # For this assignment purpose we will just directly end call
+        [self.on_call_ended(phone_number) for phone_number in agent_leads]
 
     def on_call_started(self, lead_phone_number: str):
-        self.repository.assign_agent_to_lead(lead_phone_number, self.agent_id)
+        self.repository.update_lead_in_progress(self.agent_id, lead_phone_number)
 
     def on_call_failed(self, lead_phone_number: str):
-        self.repository.fail_lead(lead_phone_number, self.agent_id)
-        self.repository.send_back_to_queue(lead_phone_number)
+        self.repository.update_lead_fail(lead_phone_number)
 
     def on_call_ended(self, lead_phone_number: str):
-        self.repository.complete_lead(lead_phone_number)
+        self.repository.update_lead_complete(lead_phone_number)
