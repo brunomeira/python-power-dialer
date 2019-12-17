@@ -6,7 +6,7 @@ class MemoryStorageLead:
         self.lock = {}
         self.storage = {}
 
-    def grant_lock(self, agent_id: str, phone_number: str):
+    def grant_lock(self, lock_name: str):
         """
         We can use redis or another implementation to guarantee distributed locking property. This is only to represent what we are doing.
         Timeout is not being used for this implementation but adding here. Ideally we should have it so it prevents deadlocks
@@ -15,7 +15,6 @@ class MemoryStorageLead:
         hold_lock_ttl = 10
 
         lock_process_id = str(uuid.uuid4())
-        lock_name = agent_id+"-"+phone_number
         grant_lock_until = time.time() + hold_lock_ttl
 
         attempt_until = time.time() + attempt_timeout
@@ -29,8 +28,7 @@ class MemoryStorageLead:
 
         return None
 
-    def release_lock(self, agent_id: str, phone_number:str, lock_id: str):
-        lock_name = agent_id+"-"+phone_number
+    def release_lock(self, lock_name:str, lock_id: str):
         return self.lock.pop(lock_name) != None
 
     def update_lead_in_progress(self, agent_id: str, phone_number: str):
