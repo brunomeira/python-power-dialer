@@ -46,15 +46,19 @@ class TestPowerDialer(unittest.TestCase):
 
     def test_on_call_started_check_lock(self):
         """
-        Check if once an agent has been granted lock for one phone, this phone cannot be granted access to other thread/process
+        Check if once an agent has been granted lock for one phone, this phone cannot be granted access to other thread/process. It also checks that different phone numbers are not affected by lock
         """
         phone_number = "111-111-1111"
+        phone_number_2 = "111-111-112"
         lock_id = self.repo.grant_lock(phone_number)
 
         power_dialer = PowerDialer("1", self.repo)
 
         power_dialer.on_call_started(phone_number)
         self.assertEqual(self.repo.find_lead(phone_number), None)
+
+        power_dialer.on_call_started(phone_number_2)
+        self.assertEqual(self.repo.find_lead(phone_number_2), ("1", "in_progress"))
 
         self.repo.release_lock(phone_number, lock_id)
 
