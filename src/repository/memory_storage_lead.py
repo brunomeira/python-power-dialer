@@ -2,17 +2,18 @@ import uuid
 import time
 
 class MemoryStorageLead:
-    def __init__(self):
+    def __init__(self, lock_timeout: int = 3):
         self.lock = {}
         self.storage = {}
+        self.lock_timeout = lock_timeout
 
     def grant_lock(self, lock_name: str):
         """
         We can use redis or another implementation to guarantee distributed locking property. This is only to represent what we are doing.
         Timeout is not being used for this implementation but adding here. Ideally we should have it so it prevents deadlocks
         """
-        attempt_timeout = 3
         hold_lock_ttl = 10
+        attempt_timeout = self.lock_timeout
 
         lock_process_id = str(uuid.uuid4())
         grant_lock_until = time.time() + hold_lock_ttl
@@ -54,5 +55,5 @@ class MemoryStorageLead:
         return results
 
     def find_lead(self, phone_number: str):
-        return self.storage[phone_number]
+        return self.storage.get(phone_number, None)
 

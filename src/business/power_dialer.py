@@ -21,21 +21,33 @@ class PowerDialer:
 
     def on_call_started(self, lead_phone_number: str):
         lock_id = self.repository.grant_lock(lead_phone_number)
-        if lock_id == None: return
+        if lock_id == None:
+            self.__log__("on_call_started lock failed for agent: {}, lead: {}".format(self.agent_id, lead_phone_number))
+            return
 
         self.repository.update_lead_in_progress(self.agent_id, lead_phone_number)
         self.repository.release_lock(lead_phone_number, lock_id)
 
     def on_call_failed(self, lead_phone_number: str):
         lock_id = self.repository.grant_lock(lead_phone_number)
-        if lock_id == None: return
+        if lock_id == None:
+            self.__log__("on_call_failed lock failed for agent: {}, lead: {}".format(self.agent_id, lead_phone_number))
+            return
 
         self.repository.update_lead_fail(lead_phone_number)
         self.repository.release_lock(lead_phone_number, lock_id)
 
     def on_call_ended(self, lead_phone_number: str):
         lock_id = self.repository.grant_lock(lead_phone_number)
-        if lock_id == None: return
+        if lock_id == None:
+            self.__log__("on_call_ended lock failed for agent: {}, lead: {}".format(self.agent_id, lead_phone_number))
+            return
 
         self.repository.update_lead_complete(lead_phone_number)
         self.repository.release_lock(lead_phone_number, lock_id)
+
+    def __log__(self, message):
+        """
+        Just a dummy implementation of log system
+        """
+        print(message)

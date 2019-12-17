@@ -5,7 +5,7 @@ from src.business.power_dialer import PowerDialer
 
 class TestPowerDialer(unittest.TestCase):
     def setUp(self):
-        self.repo = repo = MemoryStorageLead()
+        self.repo = repo = MemoryStorageLead(0.2)
 
     @mock.patch("src.business.power_dialer.dial")
     @mock.patch("src.business.power_dialer.get_lead_phone_number_to_dial")
@@ -44,6 +44,23 @@ class TestPowerDialer(unittest.TestCase):
         power_dialer.on_call_started(phone_number)
         self.assertEqual(self.repo.find_lead(phone_number), ("1", "in_progress"))
 
+    def test_on_call_started_check_lock(self):
+        """
+        Check if once an agent has been granted lock for one phone, this phone cannot be granted access to other thread/process
+        """
+        phone_number = "111-111-1111"
+        lock_id = self.repo.grant_lock(phone_number)
+
+        power_dialer = PowerDialer("1", self.repo)
+
+        power_dialer.on_call_started(phone_number)
+        self.assertEqual(self.repo.find_lead(phone_number), None)
+
+        self.repo.release_lock(phone_number, lock_id)
+
+        power_dialer.on_call_started(phone_number)
+        self.assertEqual(self.repo.find_lead(phone_number), ("1", "in_progress"))
+
     def test_on_call_failed(self):
         """
         Happy case test.
@@ -51,6 +68,25 @@ class TestPowerDialer(unittest.TestCase):
         phone_number = "111-111-1111"
         power_dialer = PowerDialer("1", self.repo)
         self.repo.storage[phone_number] = ("1", "in_progress")
+
+        power_dialer.on_call_failed(phone_number)
+        self.assertEqual(self.repo.find_lead(phone_number), ("1", "failed"))
+
+    def test_on_call_failed_check_lock(self):
+        """
+        Check if once an agent has been granted lock for one phone, this phone cannot be granted access to other thread/process
+        """
+        phone_number = "111-111-1111"
+        lock_id = self.repo.grant_lock(phone_number)
+
+        self.repo.storage[phone_number] = ("1", "in_progress")
+
+        power_dialer = PowerDialer("1", self.repo)
+
+        power_dialer.on_call_failed(phone_number)
+        self.assertEqual(self.repo.find_lead(phone_number), ("1", "in_progress"))
+
+        self.repo.release_lock(phone_number, lock_id)
 
         power_dialer.on_call_failed(phone_number)
         self.assertEqual(self.repo.find_lead(phone_number), ("1", "failed"))
@@ -65,3 +101,23 @@ class TestPowerDialer(unittest.TestCase):
 
         power_dialer.on_call_ended(phone_number)
         self.assertEqual(self.repo.find_lead(phone_number), ("1", "complete"))
+
+    def test_on_call_ended_check_lock(self):
+        """
+        Check if once an agent has been granted lock for one phone, this phone cannot be granted access to other thread/process
+        """
+        phone_number = "111-111-1111"
+        lock_id = self.repo.grant_lock(phone_number)
+
+        self.repo.storage[phone_number] = ("1", "in_progress")
+
+        power_dialer = PowerDialer("1", self.repo)
+
+        power_dialer.on_call_ended(phone_number)
+        self.assertEqual(self.repo.find_lead(phone_number), ("1", "in_progress"))
+
+        self.repo.release_lock(phone_number, lock_id)
+
+        power_dialer.on_call_ended(phone_number)
+        self.assertEqual(self.repo.find_lead(phone_number), ("1", "complete"))
+
