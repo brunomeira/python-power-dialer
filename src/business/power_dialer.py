@@ -12,16 +12,17 @@ class PowerDialer:
             phone_number = get_lead_phone_number_to_dial()
 
             if(phone_number != None and dial(self.agent_id, phone_number) == True):
-                self.repository.update_lead_in_progress(self.agent_id, phone_number)
+                self.repository.update_lead_pending(self.agent_id, phone_number)
 
     def on_agent_logout(self):
-        raise NotImplementedError
+        self.repository.end_agent_lead_calls(self.agent_id)
 
     def on_call_started(self, lead_phone_number: str):
-        raise NotImplementedError
+        self.repository.assign_agent_to_lead(lead_phone_number, self.agent_id)
 
     def on_call_failed(self, lead_phone_number: str):
-        raise NotImplementedError
+        self.repository.fail_lead(lead_phone_number, self.agent_id)
+        self.repository.send_back_to_queue(lead_phone_number)
 
     def on_call_ended(self, lead_phone_number: str):
-        raise NotImplementedError
+        self.repository.complete_lead(lead_phone_number)
