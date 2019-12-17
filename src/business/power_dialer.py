@@ -11,11 +11,11 @@ class PowerDialer:
         for call_number in range(PowerDialer.DIAL_RATIO):
             phone_number = get_lead_phone_number_to_dial()
 
-            if(phone_number != None and dial(self.agent_id, phone_number) == True):
-                self.repository.update_lead_pending(phone_number)
+            if(phone_number != None):
+                dial(self.agent_id, phone_number)
 
     def on_agent_logout(self):
-        agent_leads = self.repository.find_agent_in_progress_leads(self.agent_id)
+        agent_leads = self.repository.find_leads_in_progress_by_agent(self.agent_id)
 
         # This should actually publish an event so that we can end calls
         # For this assignment purpose we will just directly end call
