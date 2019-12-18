@@ -40,7 +40,13 @@ class MemoryStorageLead:
         return None
 
     def release_lock(self, lock_name:str, lock_id: str):
-        return self.lock_state.pop(lock_name) != None
+        lock_state = self.lock_state.get(lock_name, None)
+
+        # Corner case to take care of case where timeout expired due thread taking too long and another thread took control over it. We should not release lock if lock_ids do not match
+        if lock_name != None and lock_state[0] == lock_id:
+            return self.lock_state.pop(lock_name) != None
+
+        return True
 
     def update_lead_in_progress(self, agent_id: str, phone_number: str):
         self.storage[phone_number] = (agent_id, "in_progress")
