@@ -1,5 +1,5 @@
 # Python Power Dialer
-This project was built on Python 3.6.2. For simplicity purposes, no other tool was used. However, architecture was designed having extensibility in mind. One can easily add different technologies for storage or for managing distributed locks without changing the core of the business logic.
+This project was built on Python 3.6.2. For simplicity purposes, no other tool was used. However, the architecture was designed having extensibility in mind. One can easily add different technologies for storage or for managing distributed locks without changing the core of the business logic.
 
 ## Architecture
 The project consists of 3 main layers:
@@ -21,3 +21,15 @@ This project uses Python's default unittest framework.
 To run tests simply run
 
     python -m unittest
+
+## Call examples
+Examples of how to instantiate a new power_dialer and execute calls
+
+    from src.repository import MemoryStorageLead
+    from src.business import PowerDialer
+    lock_timeout = 2 # time in seconds
+    repo = MemoryStorageLead(lock_timeout)  # This can be the remote data storage and lock manager
+    
+    agent_id = "1"
+    power_dialer = PowerDialer(agent_id, repo)
+    # Call proper power_dialer events ...
