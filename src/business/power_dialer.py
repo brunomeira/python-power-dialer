@@ -1,4 +1,5 @@
 from ..services import dial, get_lead_phone_number_to_dial
+import pdb
 
 class PowerDialer:
     DIAL_RATIO = 2
@@ -20,31 +21,28 @@ class PowerDialer:
         [self.on_call_ended(phone_number) for phone_number in agent_leads]
 
     def on_call_started(self, lead_phone_number: str):
-        lock_id = self.repository.grant_lock(lead_phone_number)
-        if lock_id == None:
-            self.__log__("on_call_started lock failed for agent: {}, lead: {}".format(self.agent_id, lead_phone_number))
-            return
+        with self.repository.lock(lead_phone_number) as lock_id:
+            if lock_id == None:
+                self.__log__("on_call_started lock failed for agent: {}, lead: {}".format(self.agent_id, lead_phone_number))
+                return
 
-        self.repository.update_lead_in_progress(self.agent_id, lead_phone_number)
-        self.repository.release_lock(lead_phone_number, lock_id)
+            self.repository.update_lead_in_progress(self.agent_id, lead_phone_number)
 
     def on_call_failed(self, lead_phone_number: str):
-        lock_id = self.repository.grant_lock(lead_phone_number)
-        if lock_id == None:
-            self.__log__("on_call_failed lock failed for agent: {}, lead: {}".format(self.agent_id, lead_phone_number))
-            return
+        with self.repository.lock(lead_phone_number) as lock_id:
+            if lock_id == None:
+                self.__log__("on_call_failed lock failed for agent: {}, lead: {}".format(self.agent_id, lead_phone_number))
+                return
 
-        self.repository.update_lead_fail(lead_phone_number)
-        self.repository.release_lock(lead_phone_number, lock_id)
+            self.repository.update_lead_fail(lead_phone_number)
 
     def on_call_ended(self, lead_phone_number: str):
-        lock_id = self.repository.grant_lock(lead_phone_number)
-        if lock_id == None:
-            self.__log__("on_call_ended lock failed for agent: {}, lead: {}".format(self.agent_id, lead_phone_number))
-            return
+        with self.repository.lock(lead_phone_number) as lock_id:
+            if lock_id == None:
+                self.__log__("on_call_ended lock failed for agent: {}, lead: {}".format(self.agent_id, lead_phone_number))
+                return
 
-        self.repository.update_lead_complete(lead_phone_number)
-        self.repository.release_lock(lead_phone_number, lock_id)
+            self.repository.update_lead_complete(lead_phone_number)
 
     def __log__(self, message):
         """

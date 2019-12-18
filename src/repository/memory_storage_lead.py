@@ -1,11 +1,21 @@
 import uuid
 import time
+from contextlib import contextmanager
 
 class MemoryStorageLead:
     def __init__(self, lock_timeout: int = 3):
-        self.lock = {}
+        self.lock_state = {}
         self.storage = {}
         self.lock_timeout = lock_timeout
+
+    @contextmanager
+    def lock(self, lock_name):
+        lock_id = self.grant_lock(lock_name)
+
+        yield lock_id
+
+        if lock_id != None:
+            self.release_lock(lock_name, lock_id)
 
     def grant_lock(self, lock_name: str):
         """
@@ -21,8 +31,8 @@ class MemoryStorageLead:
         attempt_until = time.time() + attempt_timeout
 
         while time.time() < attempt_until:
-            if lock_name not in self.lock:
-                self.lock[lock_name] = (lock_process_id, grant_lock_until)
+            if lock_name not in self.lock_state:
+                self.lock_state[lock_name] = (lock_process_id, grant_lock_until)
                 return lock_process_id
 
             time.sleep(.001)
@@ -30,7 +40,7 @@ class MemoryStorageLead:
         return None
 
     def release_lock(self, lock_name:str, lock_id: str):
-        return self.lock.pop(lock_name) != None
+        return self.lock_state.pop(lock_name) != None
 
     def update_lead_in_progress(self, agent_id: str, phone_number: str):
         self.storage[phone_number] = (agent_id, "in_progress")
