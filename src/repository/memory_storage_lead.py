@@ -1,6 +1,7 @@
 import uuid
 import time
 from contextlib import contextmanager
+from ..business import PendingLeadCall, CompletedLeadCall, FailedLeadCall, StartedLeadCall
 
 class MemoryStorageLead:
     def __init__(self, lock_timeout: int = 3):
@@ -48,21 +49,21 @@ class MemoryStorageLead:
 
         return True
 
-    def update_lead_in_progress(self, agent_id: str, phone_number: str):
-        self.storage[phone_number] = (agent_id, "in_progress")
-        return self.storage[phone_number]
+    def update_lead_started(self, agent_id: str, phone_number: str):
+        self.storage[phone_number] = (agent_id, "started")
+        return StartedLeadCall(agent_id, phone_number)
 
     def update_lead_fail(self, phone_number: str):
         record = self.find_lead(phone_number)
-        self.storage[phone_number] = (record[0], "failed")
-        return self.storage[phone_number]
+        self.storage[phone_number] = (record.agent_id, "failed")
+        return FailedLeadCall(record.agent_id, phone_number)
 
     def update_lead_complete(self, phone_number: str):
         record = self.find_lead(phone_number)
-        self.storage[phone_number] = (record[0], "complete")
-        return self.storage[phone_number]
+        self.storage[phone_number] = (record.agent_id, "completed")
+        return CompletedLeadCall(record.agent_id, phone_number)
 
-    def find_leads_in_progress_by_agent(self, agent_id: str):
+    def find_leads_started_by_agent(self, agent_id: str):
         results = []
         for key, value in self.storage.items():
             if value[0] == agent_id:
@@ -71,5 +72,9 @@ class MemoryStorageLead:
         return results
 
     def find_lead(self, phone_number: str):
-        return self.storage.get(phone_number, None)
+        result = self.storage.get(phone_number, None)
+        if result == None: return None
+        if result[1] == "started": return StartedLeadCall(result[0], phone_number)
+        if result[1] == "completed": return CompletedLeadCall(result[0], phone_number)
+        if result[1] == "failed": return FailedLeadCall(result[0], phone_number)
 
