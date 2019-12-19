@@ -14,7 +14,7 @@ class PowerDialer:
             if(phone_number != None): dial(self.agent_id, phone_number)
 
     def on_agent_logout(self):
-        agent_leads = self.repository.find_leads_in_progress_by_agent(self.agent_id)
+        agent_leads = self.repository.find_leads_started_by_agent(self.agent_id)
 
         # This should actually publish an event so that we can end calls
         # For this assignment purpose we will just directly end call
@@ -22,25 +22,19 @@ class PowerDialer:
 
     def on_call_started(self, lead_phone_number: str):
         with self.repository.lock(lead_phone_number) as lock_id:
-            if lock_id == None:
-                self.__log__("on_call_started lock failed for agent: {}, lead: {}".format(self.agent_id, lead_phone_number))
-                return
+            if lock_id == None: return
 
-            self.repository.update_lead_in_progress(self.agent_id, lead_phone_number)
+            self.repository.update_lead_started(self.agent_id, lead_phone_number)
 
     def on_call_failed(self, lead_phone_number: str):
         with self.repository.lock(lead_phone_number) as lock_id:
-            if lock_id == None:
-                self.__log__("on_call_failed lock failed for agent: {}, lead: {}".format(self.agent_id, lead_phone_number))
-                return
+            if lock_id == None: return
 
             self.repository.update_lead_fail(lead_phone_number)
 
     def on_call_ended(self, lead_phone_number: str):
         with self.repository.lock(lead_phone_number) as lock_id:
-            if lock_id == None:
-                self.__log__("on_call_ended lock failed for agent: {}, lead: {}".format(self.agent_id, lead_phone_number))
-                return
+            if lock_id == None: return
 
             self.repository.update_lead_complete(lead_phone_number)
 

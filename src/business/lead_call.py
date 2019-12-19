@@ -14,6 +14,9 @@ class LeadCall(ABC):
     def transition_to(self, state):
         pass
 
+    def __str__(self):
+        return "{}(agent_id: {}, phone_number: {}, state: {})".format(self.__class__.__name__, self.agent_id, self.phone_number, self.state)
+
     def __eq__(self, other):
         return self.state == other.state and self.agent_id == other.agent_id and self.phone_number == other.phone_number
 

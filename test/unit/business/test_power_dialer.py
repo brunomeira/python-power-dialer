@@ -2,6 +2,7 @@ import unittest
 from unittest import mock
 from src.repository import MemoryStorageLead
 from src.business.power_dialer import PowerDialer
+from src.business.lead_call import PendingLeadCall, CompletedLeadCall, FailedLeadCall, StartedLeadCall
 
 class TestPowerDialer(unittest.TestCase):
     def setUp(self):
@@ -25,13 +26,13 @@ class TestPowerDialer(unittest.TestCase):
         """
         phone_numbers = ["111-111-1111", "111-111-1112"]
         for phone_number in phone_numbers:
-            self.repo.storage[phone_number] = ("1", "in_progress")
+            self.repo.storage[phone_number] = ("1", "started")
 
         power_dialer = PowerDialer("1", self.repo)
         power_dialer.on_agent_logout()
 
         for phone_number in phone_numbers:
-            self.assertEqual(self.repo.find_lead(phone_number), ("1", "complete"))
+            self.assertEqual(self.repo.find_lead(phone_number), CompletedLeadCall("1", phone_number))
 
     def test_on_call_started(self):
         """
@@ -42,7 +43,7 @@ class TestPowerDialer(unittest.TestCase):
         power_dialer = PowerDialer("1", self.repo)
 
         power_dialer.on_call_started(phone_number)
-        self.assertEqual(self.repo.find_lead(phone_number), ("1", "in_progress"))
+        self.assertEqual(self.repo.find_lead(phone_number), StartedLeadCall("1", phone_number))
 
     def test_on_call_started_check_lock(self):
         """
@@ -58,12 +59,12 @@ class TestPowerDialer(unittest.TestCase):
         self.assertEqual(self.repo.find_lead(phone_number), None)
 
         power_dialer.on_call_started(phone_number_2)
-        self.assertEqual(self.repo.find_lead(phone_number_2), ("1", "in_progress"))
+        self.assertEqual(self.repo.find_lead(phone_number_2), StartedLeadCall("1", phone_number_2))
 
         self.repo.release_lock(phone_number, lock_id)
 
         power_dialer.on_call_started(phone_number)
-        self.assertEqual(self.repo.find_lead(phone_number), ("1", "in_progress"))
+        self.assertEqual(self.repo.find_lead(phone_number), StartedLeadCall("1", phone_number))
 
     def test_on_call_failed(self):
         """
@@ -71,10 +72,10 @@ class TestPowerDialer(unittest.TestCase):
         """
         phone_number = "111-111-1111"
         power_dialer = PowerDialer("1", self.repo)
-        self.repo.storage[phone_number] = ("1", "in_progress")
+        self.repo.storage[phone_number] = ("1", "started")
 
         power_dialer.on_call_failed(phone_number)
-        self.assertEqual(self.repo.find_lead(phone_number), ("1", "failed"))
+        self.assertEqual(self.repo.find_lead(phone_number), FailedLeadCall("1", phone_number))
 
     def test_on_call_failed_check_lock(self):
         """
@@ -83,17 +84,17 @@ class TestPowerDialer(unittest.TestCase):
         phone_number = "111-111-1111"
         lock_id = self.repo.grant_lock(phone_number)
 
-        self.repo.storage[phone_number] = ("1", "in_progress")
+        self.repo.storage[phone_number] = ("1", "started")
 
         power_dialer = PowerDialer("1", self.repo)
 
         power_dialer.on_call_failed(phone_number)
-        self.assertEqual(self.repo.find_lead(phone_number), ("1", "in_progress"))
+        self.assertEqual(self.repo.find_lead(phone_number), StartedLeadCall("1", phone_number))
 
         self.repo.release_lock(phone_number, lock_id)
 
         power_dialer.on_call_failed(phone_number)
-        self.assertEqual(self.repo.find_lead(phone_number), ("1", "failed"))
+        self.assertEqual(self.repo.find_lead(phone_number), FailedLeadCall("1", phone_number))
 
     def test_on_call_ended(self):
         """
@@ -101,10 +102,10 @@ class TestPowerDialer(unittest.TestCase):
         """
         phone_number = "111-111-1111"
         power_dialer = PowerDialer("1", self.repo)
-        self.repo.storage[phone_number] = ("1", "in_progress")
+        self.repo.storage[phone_number] = ("1", "started")
 
         power_dialer.on_call_ended(phone_number)
-        self.assertEqual(self.repo.find_lead(phone_number), ("1", "complete"))
+        self.assertEqual(self.repo.find_lead(phone_number), CompletedLeadCall("1", phone_number))
 
     def test_on_call_ended_check_lock(self):
         """
@@ -113,15 +114,14 @@ class TestPowerDialer(unittest.TestCase):
         phone_number = "111-111-1111"
         lock_id = self.repo.grant_lock(phone_number)
 
-        self.repo.storage[phone_number] = ("1", "in_progress")
+        self.repo.storage[phone_number] = ("1", "started")
 
         power_dialer = PowerDialer("1", self.repo)
 
         power_dialer.on_call_ended(phone_number)
-        self.assertEqual(self.repo.find_lead(phone_number), ("1", "in_progress"))
+        self.assertEqual(self.repo.find_lead(phone_number), StartedLeadCall("1", phone_number))
 
         self.repo.release_lock(phone_number, lock_id)
 
         power_dialer.on_call_ended(phone_number)
-        self.assertEqual(self.repo.find_lead(phone_number), ("1", "complete"))
-
+        self.assertEqual(self.repo.find_lead(phone_number), CompletedLeadCall("1", phone_number))
