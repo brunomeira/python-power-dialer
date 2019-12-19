@@ -1,4 +1,4 @@
-from ..services import dial, get_lead_phone_number_to_dial
+from src.services import dial, get_lead_phone_number_to_dial
 from .lead_call import PendingLeadCall, StartedLeadCall, FailedLeadCall, CompletedLeadCall
 import pdb
 
