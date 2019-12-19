@@ -1,8 +1,9 @@
+import time
 from src.services import dial, get_lead_phone_number_to_dial
 from .lead_call import PendingLeadCall, StartedLeadCall, FailedLeadCall, CompletedLeadCall
-import pdb
 
 class PowerDialer:
+    MAX_SYNCHRONIZATION_ATTEMPTS = 3
     DIAL_RATIO = 2
 
     def __init__(self, agent_id: str, repository):
@@ -29,14 +30,21 @@ class PowerDialer:
 
             previous_lead = self.repository.find_lead(lead_phone_number)
 
-            if previous_lead == None:
-                previous_lead = PendingLeadCall(self.agent_id, lead_phone_number)
+            if previous_lead == None: previous_lead = PendingLeadCall(self.agent_id, lead_phone_number)
 
             if previous_lead.transition_to("started") == StartedLeadCall(self.agent_id, lead_phone_number):
                 self.repository.update_lead_started(self.agent_id, lead_phone_number)
                 self.__log__("agent {} - call started {}".format(lead_phone_number, self.agent_id))
 
+
+
     def on_call_failed(self, lead_phone_number: str):
+        message_received = self.__check_if_previous_message_received__(StartedLeadCall(self.agent_id, lead_phone_number))
+
+        if message_received != True:
+            self.__log__("on_call_failed: Timeout while waiting for message start to come")
+            return
+
         with self.repository.lock(lead_phone_number) as lock_id:
             if lock_id == None:
                 self.__log__("on_call_failed: lock not acquired for agent {} phone {}".format(self.agent_id, lead_phone_number))
@@ -50,17 +58,41 @@ class PowerDialer:
                 self.__log__("agent {} - call failed {}".format(lead_phone_number, self.agent_id))
 
     def on_call_ended(self, lead_phone_number: str):
+        message_received = self.__check_if_previous_message_received__(StartedLeadCall(self.agent_id, lead_phone_number))
+
+        if message_received != True:
+            self.__log__("on_call_failed: Timeout while waiting for message start to come")
+            return
+
         with self.repository.lock(lead_phone_number) as lock_id:
             if lock_id == None:
                 self.__log__("on_call_ended: lock not acquired for agent {} phone {}".format(self.agent_id, lead_phone_number))
                 return
 
-            previous_lead = self.repository.find_lead(lead_phone_number)
+            previous_lead = self.__fetch_lead_state__(lead_phone_number)
 
             if previous_lead.transition_to("completed") == CompletedLeadCall(self.agent_id, lead_phone_number):
                 self.repository.update_lead_complete(lead_phone_number)
                 self.__get_lead_and_dial__()
                 self.__log__("agent {} - call ended {}".format(lead_phone_number, self.agent_id))
+
+    def __check_if_previous_message_received__(self, expected_state):
+        attempt_count = 0
+        message_received = False
+
+        while attempt_count < PowerDialer.MAX_SYNCHRONIZATION_ATTEMPTS:
+            current_state = self.__fetch_lead_state__(expected_state.phone_number)
+            if current_state == expected_state:
+                message_received = True
+                break
+
+            time.wait(1)
+            attempt_count += 1
+
+        return message_received
+
+    def __fetch_lead_state__(self, lead_phone_number):
+        return self.repository.find_lead(lead_phone_number)
 
     def __get_lead_and_dial__(self):
         phone_number = get_lead_phone_number_to_dial()

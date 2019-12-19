@@ -1,8 +1,8 @@
 event,agent_id,lead_phone_number
 login,1,
-login,2,-1
+login,2,
 started,1,647-111-1111
-login,3,-1
+login,3,
 started,2,647-111-1112
 started,2,647-111-1113
 failed,2,647-111-1113
