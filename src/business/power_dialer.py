@@ -39,7 +39,7 @@ class PowerDialer:
 
             if previous_lead.transition_to("failed") == FailedLeadCall(self.agent_id, lead_phone_number):
                 self.repository.update_lead_fail(lead_phone_number)
-                
+                self.__get_lead_and_dial__()
 
     def on_call_ended(self, lead_phone_number: str):
         with self.repository.lock(lead_phone_number) as lock_id:
@@ -49,13 +49,8 @@ class PowerDialer:
 
             if previous_lead.transition_to("completed") == CompletedLeadCall(self.agent_id, lead_phone_number):
                 self.repository.update_lead_complete(lead_phone_number)
+                self.__get_lead_and_dial__()
 
     def __get_lead_and_dial__(self):
         phone_number = get_lead_phone_number_to_dial()
         if(phone_number != None): dial(self.agent_id, phone_number)
-
-    def __log__(self, message):
-        """
-        Just a dummy implementation of log system
-        """
-        print(message)

@@ -66,16 +66,22 @@ class TestPowerDialer(unittest.TestCase):
         power_dialer.on_call_started(phone_number)
         self.assertEqual(self.repo.find_lead(phone_number), StartedLeadCall("1", phone_number))
 
-    def test_on_call_failed(self):
+    @mock.patch("src.business.power_dialer.dial")
+    @mock.patch("src.business.power_dialer.get_lead_phone_number_to_dial")
+    def test_on_call_failed(self, mock_lead_phone_number, mock_dial):
         """
         Happy case test.
         """
+        mock_lead_phone_number.side_effect = ["111-111-1112"]
+
         phone_number = "111-111-1111"
         power_dialer = PowerDialer("1", self.repo)
         self.repo.storage[phone_number] = ("1", "started")
 
         power_dialer.on_call_failed(phone_number)
         self.assertEqual(self.repo.find_lead(phone_number), FailedLeadCall("1", phone_number))
+
+        self.assertEqual(mock_dial.call_count, 1)
 
     def test_on_call_failed_check_lock(self):
         """
@@ -96,16 +102,21 @@ class TestPowerDialer(unittest.TestCase):
         power_dialer.on_call_failed(phone_number)
         self.assertEqual(self.repo.find_lead(phone_number), FailedLeadCall("1", phone_number))
 
-    def test_on_call_ended(self):
+    @mock.patch("src.business.power_dialer.dial")
+    @mock.patch("src.business.power_dialer.get_lead_phone_number_to_dial")
+    def test_on_call_ended(self, mock_lead_phone_number, mock_dial):
         """
         Happy case test.
         """
+        mock_lead_phone_number.side_effect = ["111-111-1112"]
         phone_number = "111-111-1111"
         power_dialer = PowerDialer("1", self.repo)
         self.repo.storage[phone_number] = ("1", "started")
 
         power_dialer.on_call_ended(phone_number)
         self.assertEqual(self.repo.find_lead(phone_number), CompletedLeadCall("1", phone_number))
+
+        self.assertEqual(mock_dial.call_count, 1)
 
     def test_on_call_ended_check_lock(self):
         """
