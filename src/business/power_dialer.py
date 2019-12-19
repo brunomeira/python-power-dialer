@@ -36,13 +36,11 @@ class PowerDialer:
                 self.repository.update_lead_started(self.agent_id, lead_phone_number)
                 self.__log__("agent {} - call started {}".format(lead_phone_number, self.agent_id))
 
-
-
     def on_call_failed(self, lead_phone_number: str):
         message_received = self.__check_if_previous_message_received__(StartedLeadCall(self.agent_id, lead_phone_number))
 
         if message_received != True:
-            self.__log__("on_call_failed: Timeout while waiting for message start to come")
+            self.__log__("on_call_failed: Timeout while waiting for message start to come - agent {} - lead {}".format(self.agent_id, lead_phone_number))
             return
 
         with self.repository.lock(lead_phone_number) as lock_id:
@@ -61,7 +59,7 @@ class PowerDialer:
         message_received = self.__check_if_previous_message_received__(StartedLeadCall(self.agent_id, lead_phone_number))
 
         if message_received != True:
-            self.__log__("on_call_failed: Timeout while waiting for message start to come")
+            self.__log__("on_call_ended: Timeout while waiting for message start to come - agent {} - lead {}".format(self.agent_id, lead_phone_number))
             return
 
         with self.repository.lock(lead_phone_number) as lock_id:
@@ -82,11 +80,12 @@ class PowerDialer:
 
         while attempt_count < PowerDialer.MAX_SYNCHRONIZATION_ATTEMPTS:
             current_state = self.__fetch_lead_state__(expected_state.phone_number)
-            if current_state == expected_state:
+
+            if (current_state is not None and current_state == expected_state):
                 message_received = True
                 break
 
-            time.wait(1)
+            time.sleep(0.5)
             attempt_count += 1
 
         return message_received
