@@ -8,7 +8,7 @@ To run the project simply run
 
 
 ## States - Lead call
-Lead calls represent the state of a current call through an agent 
+Lead calls represent the state of a current call through an agent. Transitions to own state to not raise an exception
 
 | State | Explanation | Transitions |
 |--|--|--|
@@ -19,7 +19,8 @@ Lead calls represent the state of a current call through an agent
 | failed | A failed call between a client and an agent. They can be picked up by an any agent for a call | failed -> called
 
 ## States - Agent
-Each agent has their proper state.
+Each agent has their proper state. Transitions to own state to not raise an exception
+
 | State | Explanation | Transitions |
 |--|--|--|
 | online | Agents that are online can start calls  | online -> offline
