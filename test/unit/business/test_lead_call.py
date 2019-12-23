@@ -1,23 +1,23 @@
 import unittest
-from src.business.lead_call import PendingLeadCall, CompletedLeadCall, FailedLeadCall, StartedLeadCall
+from src.repository import MemoryStorageLead
+from src.business.lead_call import CalledLeadCall,PendingLeadCall, CompletedLeadCall, FailedLeadCall, StartedLeadCall
 
 class TestPendingLeadCall(unittest.TestCase):
     def setUp(self):
         self.agent_id = "1"
         self.phone_number = "111-111-1111"
-        self.lead_call = PendingLeadCall(self.agent_id, self.phone_number)
+        self.repo = repo = MemoryStorageLead(0.2)
+        self.lead_call = PendingLeadCall(self.agent_id, self.phone_number, repo)
 
-    def test_on_call_started(self):
-        result = self.lead_call.transition_to("started")
-        expected_result = StartedLeadCall(self.agent_id, self.phone_number)
+    def test_on_call_called(self):
+        result = self.lead_call.transition_to("called")
+        expected_result = CalledLeadCall(self.agent_id, self.phone_number, self.repo)
         self.assertEqual(result, expected_result)
 
     def test_on_call_failed(self):
-        error_message = "Transition from pending to failed is invalid"
-        with self.assertRaises(Exception) as context:
-            result = self.lead_call.transition_to("failed")
-
-        self.assertTrue(error_message in str(context.exception))
+        result = self.lead_call.transition_to("failed")
+        expected_result = FailedLeadCall(self.agent_id, self.phone_number, self.repo)
+        self.assertEqual(result, expected_result)
 
     def test_on_call_completed(self):
         error_message = "Transition from pending to completed is invalid"
@@ -34,7 +34,8 @@ class TestStartedCallLead(unittest.TestCase):
     def setUp(self):
         self.agent_id = "1"
         self.phone_number = "111-111-1111"
-        self.lead_call = StartedLeadCall(self.agent_id, self.phone_number)
+        self.repo = repo = MemoryStorageLead(0.2)
+        self.lead_call = StartedLeadCall(self.agent_id, self.phone_number, self.repo)
 
     def test_on_call_started(self):
         result = self.lead_call.transition_to("started")
@@ -42,19 +43,20 @@ class TestStartedCallLead(unittest.TestCase):
 
     def test_on_call_failed(self):
         result = self.lead_call.transition_to("failed")
-        expected_result = FailedLeadCall(self.agent_id, self.phone_number)
+        expected_result = FailedLeadCall(self.agent_id, self.phone_number, self.repo)
         self.assertEqual(result, expected_result)
 
     def test_on_call_completed(self):
         result = self.lead_call.transition_to("completed")
-        expected_result = CompletedLeadCall(self.agent_id, self.phone_number)
+        expected_result = CompletedLeadCall(self.agent_id, self.phone_number, self.repo)
         self.assertEqual(result, expected_result)
 
 class TestCompletedCallLead(unittest.TestCase):
     def setUp(self):
         self.agent_id = "1"
         self.phone_number = "111-111-1111"
-        self.lead_call = CompletedLeadCall(self.agent_id, self.phone_number)
+        self.repo = repo = MemoryStorageLead(0.2)
+        self.lead_call = CompletedLeadCall(self.agent_id, self.phone_number, self.repo)
 
     def test_on_call_started(self):
         error_message = "Transition from completed to started is invalid"
@@ -78,7 +80,8 @@ class TestFailedCallLead(unittest.TestCase):
     def setUp(self):
         self.agent_id = "1"
         self.phone_number = "111-111-1111"
-        self.lead_call = FailedLeadCall(self.agent_id, self.phone_number)
+        self.repo = repo = MemoryStorageLead(0.2)
+        self.lead_call = FailedLeadCall(self.agent_id, self.phone_number, self.repo)
 
     def test_on_call_started(self):
         error_message = "Transition from failed to started is invalid"

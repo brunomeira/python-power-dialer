@@ -1,6 +1,12 @@
 # Python Power Dialer
 This project was built on Python 3.6.2. For simplicity purposes, no other tool was used. However, the architecture was designed having extensibility in mind. One can easily add different technologies for storage or for managing distributed locks without changing the core of the business logic.
 
+## How to run
+To run the project simply run
+
+    python main.py
+
+
 ## Architecture
 The project consists of 3 main layers:
  - Business
