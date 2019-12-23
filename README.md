@@ -7,6 +7,25 @@ To run the project simply run
     python main.py
 
 
+## States - Lead call
+Lead calls represent the state of a current call through an agent 
+
+| State | Explanation | Transitions |
+|--|--|--|
+| pending | Leads that are pending can be picked up by an any agent for a call  | pending -> called OR pending -> failed
+| called | Leads that are called represent the ones that agent requested a call but client has yet to pick up | called -> started OR called -> failed
+| started | Leads that are started represent the ones that agent already are chatting with client | started -> completed OR started -> failed
+| completed | A successful call between a client and an agent | final state
+| failed | A failed call between a client and an agent. They can be picked up by an any agent for a call | failed -> called
+
+## States - Agent
+Each agent has their proper state.
+| State | Explanation | Transitions |
+|--|--|--|
+| online | Agents that are online can start calls  | online -> offline
+| offline | Agents that are offline cannot start calls  | offline -> online
+
+
 ## Architecture
 The project consists of 3 main layers:
  - Business
