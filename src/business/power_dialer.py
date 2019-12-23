@@ -80,7 +80,11 @@ class PowerDialer:
 
             if new_state.state == "completed":
                 if(agent is not None and agent.state == "online"):
-                    self.__get_lead_and_dial__()
+                    phone_number = self.__get_lead_and_dial__()
+
+                    if phone_number is not None:
+                        pending_lead_call = PendingLeadCall(self.agent_id, phone_number, self.repository)
+                        pending_lead_call.transition_to("called")
                 self.__log__("agent {} - call ended {}".format(self.agent_id, lead_phone_number))
 
     def __fetch_lead_state__(self, lead_phone_number):

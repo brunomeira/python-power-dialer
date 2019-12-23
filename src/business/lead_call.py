@@ -86,6 +86,11 @@ class FailedLeadCall(LeadCall):
 
     def transition_to(self, state):
         if state == self.state: return self
+
+        if state == "called":
+            self.repository.update_lead_called(self.agent_id, self.phone_number)
+            return CalledLeadCall(self.agent_id, self.phone_number, self.repository)
+
         raise Exception("{}: Transition from {} to {} is invalid".format(self, self.state, state))
 
 class CompletedLeadCall(LeadCall):

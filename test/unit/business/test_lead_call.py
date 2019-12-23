@@ -100,3 +100,8 @@ class TestFailedCallLead(unittest.TestCase):
     def test_on_call_failed(self):
         result = self.lead_call.transition_to("failed")
         self.assertEqual(result, result)
+
+    def test_on_call_called(self):
+        result = self.lead_call.transition_to("called")
+        expected_result = CalledLeadCall(self.agent_id, self.phone_number, self.repo)
+        self.assertEqual(result, result)
